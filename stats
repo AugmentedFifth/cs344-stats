@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+
+# Get the data (whether from specified file or directly from stdin)
+# into a single spot.
+datapath="data$$"
+clean_up_data=1 # Whether or not $datapath is the name of a temp file that
+                # we need to clean up later.
+if [ "$#" = "1" ];
+then
+    cat > "$datapath"
+    clean_up_data=0 # This needs to be cleaned up.
+elif [ "$#" = "2" ];
+then
+    datapath="$2"
+else
+    echo "./stats {-rows|-cols} [file]" 1>&2
+    exit 1
+fi
+
+
+# Decide whether to process rows or columns.
+if [[ $1 == -r* ]];
+then
+    while read line
+    do
+        median_temp_file="median$$"
+
+        elem_count=0
+        sum=0
+        for num in $line
+        do
+            (( elem_count++ ))
+            (( sum += num ))
+            echo "$num" >> "$median_temp_file"
+        done
+
+        rm -f "$median_temp_file"
+
+        # Testing
+        echo "elem_count: $elem_count, sum: $sum"
+    done < "$datapath"
+elif [[ $1 == -c* ]];
+then
+    echo "loopy"
+else
+    if [ "$clean_up_data" = "0" ];
+    then
+        rm -f "$datapath"
+    fi
+
+    echo "./stats {-rows|-cols} [file]" 1>&2
+    exit 1
+fi
+
+
+# Cleanup
+if [ "$clean_up_data" = "0" ];
+then
+    rm -f "$datapath"
+fi
+
