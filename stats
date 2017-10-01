@@ -1,9 +1,26 @@
 #!/usr/bin/env bash
 
 
+# Declaring all possible temporary file names first so that we can just add
+# a single `trap` command and now have to re-set the trap using string
+# concatenation.
+datapath="data$$"
+
+# Rows mode
+median_temp_file="median$$"
+
+# Cols mode
+# (File to store each column as we `cut` it.)
+col_temp_file="col_temp_file$$"
+# (Files to store averages and medians for display.)
+avgs_temp_file="avgs_temp_file$$"
+medians_temp_file="medians_temp_file$$"
+
+trap "rm -f $datapath $median_temp_file $col_temp_file $avgs_temp_file $medians_temp_file; exit 1" INT HUP TERM
+
+
 # Get the data (whether from specified file or directly from stdin)
 # into a single spot.
-datapath="data$$"
 clean_up_data=1 # Whether or not $datapath is the name of a temp file that
                 # we need to clean up later.
 if [ "$#" = "1" ];
@@ -44,8 +61,6 @@ if [[ $1 == -r* ]];
 then
     echo -e "Average\tMedian"
 
-    median_temp_file="median$$" # Store numbers here as we see them to
-                                # make it easier later.
     while read line
     do
         # We use a simple loop/accumulate regime to get the number of elements
@@ -76,13 +91,6 @@ then
     # Quickly figure out how many columns we are working with so that we can
     # loop through the relevant indices.
     col_count="$(head -n1 $datapath | wc -w)"
-
-    # File to store each column as we `cut` it.
-    col_temp_file="col_temp_file$$"
-
-    # Files to store averages and medians for display.
-    avgs_temp_file="avgs_temp_file$$"
-    medians_temp_file="medians_temp_file$$"
 
     i=1
     while (( i <= col_count ));
