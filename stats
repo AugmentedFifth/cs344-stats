@@ -19,6 +19,26 @@ else
 fi
 
 
+# Error handling that bails out early based on input file.
+if [ ! -f $datapath ];
+then
+    echo "$datapath: file does not exist or is not a plain file"
+    exit 1
+fi
+
+if [ ! -r $datapath ];
+then
+    echo "$datapath: file could not be read"
+    exit 1
+fi
+
+if [ ! -s $datapath ];
+then
+    echo "$datapath: file is empty"
+    exit 0
+fi
+
+
 # Decide whether to process rows or columns.
 if [[ $1 == -r* ]];
 then
@@ -44,14 +64,10 @@ then
 
         middle_index=$(( elem_count / 2 + 1 )) # 1-indexed because we're
                                                # using `head`.
-        #echo "[$middle_index]"
-        #sort "$median_temp_file" | cat
 
         median="$(sort -n $median_temp_file | head -n$middle_index | tail -n1)"
 
         rm -f "$median_temp_file"
-
-        #echo "elem_count: $elem_count, sum: $sum, avg: $avg, median: $median"
 
         echo -e "$avg\t$median"
     done < "$datapath"
@@ -69,7 +85,7 @@ then
     medians_temp_file="medians_temp_file$$"
 
     i=1
-    while [ "$i" -le "$col_count" ];
+    while (( i <= col_count ));
     do
         cut -f "$i" "$datapath" > "$col_temp_file"
 
