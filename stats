@@ -7,6 +7,8 @@
 datapath="data$$"
 
 # Rows mode
+# (Accumulate row in a temp file so the median can be easily calculated after
+# the loop)
 median_temp_file="median$$"
 
 # Cols mode
@@ -80,8 +82,11 @@ then
         middle_index=$(( elem_count / 2 + 1 )) # 1-indexed because we're
                                                # using `head`.
 
+        # Sort, take the first n, and take the last one of those, thus getting
+        # the nth element, which is what we want.
         median="$(sort -n $median_temp_file | head -n$middle_index | tail -n1)"
 
+        # Clean up and we're done.
         rm -f "$median_temp_file"
 
         echo -e "$avg\t$median"
@@ -106,6 +111,9 @@ then
             (( sum += num ))
         done < "$col_temp_file"
 
+        # We are calculating average and median just like with rows, but we
+        # can't print them right now since they need to be formatted in
+        # columns, so we use two more temp files.
         avg=$(( (sum + elem_count / 2) / elem_count ))
         echo -e "$avg\t\c" >> "$avgs_temp_file"
 
@@ -117,6 +125,7 @@ then
         (( i++ ))
     done
 
+    # Clean up and print results.
     rm -f "$col_temp_file"
 
     echo "Averages:"
@@ -129,6 +138,8 @@ then
     rm -f "$avgs_temp_file"
     rm -f "$medians_temp_file"
 else
+    # Didn't get the right flag argument.
+
     if [ "$clean_up_data" = "0" ];
     then
         rm -f "$datapath"
