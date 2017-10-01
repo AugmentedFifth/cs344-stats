@@ -47,7 +47,7 @@ then
         #echo "[$middle_index]"
         #sort "$median_temp_file" | cat
 
-        median="$(sort -n$median_temp_file | head -n$middle_index | tail -n1)"
+        median="$(sort -n $median_temp_file | head -n$middle_index | tail -n1)"
 
         rm -f "$median_temp_file"
 
@@ -64,11 +64,16 @@ then
     # File to store each column as we `cut` it.
     col_temp_file="col_temp_file$$"
 
+    # Files to store averages and medians for display.
+    avgs_temp_file="avgs_temp_file$$"
+    medians_temp_file="medians_temp_file$$"
+
     i=1
-    while [[ i <= col_count ]];
+    while [ "$i" -le "$col_count" ];
     do
         cut -f "$i" "$datapath" > "$col_temp_file"
 
+        # Now the procedure is essentially the same as with rows.
         elem_count=0
         sum=0
         while read num
@@ -77,10 +82,28 @@ then
             (( sum += num ))
         done < "$col_temp_file"
 
+        avg=$(( (sum + elem_count / 2) / elem_count ))
+        echo -e "$avg\t\c" >> "$avgs_temp_file"
+
+        middle_index=$(( elem_count / 2 + 1 ))
+
+        median="$(sort -n $col_temp_file | head -n$middle_index | tail -n1)"
+        echo -e "$median\t\c" >> "$medians_temp_file"
+
         (( i++ ))
     done
 
     rm -f "$col_temp_file"
+
+    echo "Averages:"
+    cat "$avgs_temp_file"
+    echo ""
+    echo "Medians:"
+    cat "$medians_temp_file"
+    echo ""
+
+    rm -f "$avgs_temp_file"
+    rm -f "$medians_temp_file"
 else
     if [ "$clean_up_data" = "0" ];
     then
