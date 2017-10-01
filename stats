@@ -28,7 +28,10 @@ then
                                 # make it easier later.
     while read line
     do
-        elem_count=0 # # of elements in this row.
+        # We use a simple loop/accumulate regime to get the number of elements
+        # in this row and the sum of the elements of this row, and to put the
+        # row in its own file for median-obtaining purposes.
+        elem_count=0
         sum=0
         for num in $line
         do
@@ -44,7 +47,7 @@ then
         #echo "[$middle_index]"
         #sort "$median_temp_file" | cat
 
-        median="$(sort -n $median_temp_file | head -n $middle_index | tail -n 1)"
+        median="$(sort -n$median_temp_file | head -n$middle_index | tail -n1)"
 
         rm -f "$median_temp_file"
 
@@ -54,7 +57,30 @@ then
     done < "$datapath"
 elif [[ $1 == -c* ]];
 then
-    echo "loopy"
+    # Quickly figure out how many columns we are working with so that we can
+    # loop through the relevant indices.
+    col_count="$(head -n1 $datapath | wc -w)"
+
+    # File to store each column as we `cut` it.
+    col_temp_file="col_temp_file$$"
+
+    i=1
+    while [[ i <= col_count ]];
+    do
+        cut -f "$i" "$datapath" > "$col_temp_file"
+
+        elem_count=0
+        sum=0
+        while read num
+        do
+            (( elem_count++ ))
+            (( sum += num ))
+        done < "$col_temp_file"
+
+        (( i++ ))
+    done
+
+    rm -f "$col_temp_file"
 else
     if [ "$clean_up_data" = "0" ];
     then
@@ -66,7 +92,7 @@ else
 fi
 
 
-# Cleanup
+# Clean up if necessary.
 if [ "$clean_up_data" = "0" ];
 then
     rm -f "$datapath"
