@@ -22,11 +22,13 @@ fi
 # Decide whether to process rows or columns.
 if [[ $1 == -r* ]];
 then
+    echo -e "Average\tMedian"
+
+    median_temp_file="median$$" # Store numbers here as we see them to
+                                # make it easier later.
     while read line
     do
-        median_temp_file="median$$"
-
-        elem_count=0
+        elem_count=0 # # of elements in this row.
         sum=0
         for num in $line
         do
@@ -35,10 +37,20 @@ then
             echo "$num" >> "$median_temp_file"
         done
 
+        avg=$(( (sum + elem_count / 2) / elem_count ))
+
+        middle_index=$(( elem_count / 2 + 1 )) # 1-indexed because we're
+                                               # using `head`.
+        #echo "[$middle_index]"
+        #sort "$median_temp_file" | cat
+
+        median="$(sort -n $median_temp_file | head -n $middle_index | tail -n 1)"
+
         rm -f "$median_temp_file"
 
-        # Testing
-        echo "elem_count: $elem_count, sum: $sum"
+        #echo "elem_count: $elem_count, sum: $sum, avg: $avg, median: $median"
+
+        echo -e "$avg\t$median"
     done < "$datapath"
 elif [[ $1 == -c* ]];
 then
